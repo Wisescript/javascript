@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QSX</title>
+  <script src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.7.2/css/bulma.min.css">
+  <style> @font-face { font-family: 'dft' ; src: url('https://fonts.gstatic.com/s/spartan/v1/l7gAbjR61M69yt8Z8w6FZf9WoBxdBrHbuV6JABTPfJqT.woff2'); } 
+    body { background-color: #607080; font-family: "dft" ; font-size: 8pt; 
+    background-image: radial-gradient(#607080 50% ,#506068 80%) ; 
+      
+    }
+    won { color: #fff; width:680px; margin:20px;display:block; } 
+    node {  padding:5px;font-weight: bold; display:block;} 
+  </style>
+</head>
+
+<body>
+  <p><br/></p>
+<won>
+   <script>
+function reader() 
+{
+  this.data=[];
+  this.bits=0;
+  this.power=0;
+  this.readBit = function(reader){
+    var bit=0;
+    try
+    {
+      reader.power++;
+      bit=reader.data[reader.bits] &(1<<(8-reader.power));  
+      if (reader.power>=8)
+      {
+        reader.bits++;
+        reader.power=0;
+      }
+    }catch(ex){}
+    return (bit==0)?0:1;
+  };
+  this.readValue = function(reader, nbits){
+     var value=0;
+     while(nbits>0)
+     {
+       nbits--;
+       value=value<<1;
+       value+=reader.readBit(reader);
+     }
+     return value;
+  };
+}
+function writer() 
+{
+  this.data=[];
+  this.bits=0;
+  this.power=0;
+  this.writeBit = function(writer, bit){
+    writer.power++;
+    writer.bits+=bit<<(8-writer.power);
+    if (writer.power>=8)
+    {
+      writer.data.push(writer.bits);
+      writer.bits=0;
+      writer.power=0;
+    }
+  };
+  this.writeValue = function(writer, value, nbits){
+    while(nbits>0)
+    {
+      nbits--;
+      writer.writeBit(writer,(value&(1<<nbits))==0?0:1);
+    }
+  };
+} 
+
+var QSX = {
+   encode: function(data){
+     var bytes = new writer();
+     
+     
+     return bytes.data;
+   }, 
+   decode: function(data){
+     var bytes=new reader();
+     bytes.data=data;
+     var result=[];
+     
+     
+     return result;
+   }
+};
+
+var LZW = {
+    compress: function (uncompressed) {
+        "use strict";
+        // Build the dictionary.
+        var i,
+            dictionary = {},
+            c,
+            wc,
+            w = "",
+            result = [],
+            dictSize = 256;
+        for (i = 0; i < 256; i += 1) {
+            dictionary[String.fromCharCode(i)] = i;
+        }
+ 
+        for (i = 0; i < uncompressed.length; i += 1) {
+            c = uncompressed.charAt(i);
+            wc = w + c;
+            //Do not use dictionary[wc] because javascript arrays 
+            //will return values for array['pop'], array['push'] etc
+           // if (dictionary[wc]) {
+            if (dictionary.hasOwnProperty(wc)) {
+                w = wc;
+            } else {
+                result.push(dictionary[w]);
+                // Add wc to the dictionary.
+                dictionary[wc] = dictSize++;
+                w = String(c);
+            }
+        }
+ 
+        // Output the code for w.
+        if (w !== "") {
+            result.push(dictionary[w]);
+        }
+        return result;
+    },
+ 
+ 
+    decompress: function (compressed) {
+        "use strict";
+        // Build the dictionary.
+        var i,
+            dictionary = [],
+            w,
+            result,
+            k,
+            entry = "",
+            dictSize = 256;
+        for (i = 0; i < 256; i += 1) {
+            dictionary[i] = String.fromCharCode(i);
+        }
+ 
+        w = String.fromCharCode(compressed[0]);
+        result = w;
+        for (i = 1; i < compressed.length; i += 1) {
+            k = compressed[i];
+            if (dictionary[k]) {
+                entry = dictionary[k];
+            } else {
+                if (k === dictSize) {
+                    entry = w + w.charAt(0);
+                } else {
+                    return null;
+                }
+            }
+ 
+            result += entry;
+ 
+            // Add w+entry[0] to the dictionary.
+            dictionary[dictSize++] = w + entry.charAt(0);
+ 
+            w = entry;
+        }
+        return result;
+    }
+}, 
+    comp = LZW.compress("Qsx for javascript"),
+    decomp = LZW.decompress(comp);
+    var data=QSX.encode("Hello--");
+    var usx=QSX.decode(data);
+    document.write(usx);
+    document.write(decomp);
+   </script>
+   
+</won>
+ </body>
+   
