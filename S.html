@@ -25,8 +25,8 @@ function reader()
   this.power=0;
   this.readBit = function(reader){
     var bit=0;
-    try
-    {
+    
+    
       reader.power++;
       bit=reader.data[reader.bits] &(1<<(8-reader.power));  
       if (reader.power>=8)
@@ -34,7 +34,7 @@ function reader()
         reader.bits++;
         reader.power=0;
       }
-    }catch(ex){}
+    
     return (bit==0)?0:1;
   };
   this.readValue = function(reader, nbits){
@@ -71,21 +71,112 @@ function writer()
     }
   };
 } 
-
+var code=[1,1,1,0];
+var codebits=[1,2,3,3];
 var QSX = {
    encode: function(data){
      var bytes = new writer();
-     
+     for(var a=0;a<data.length;a++)
+     {
+       try{
+				var l=(data.charCodeAt(a)&3);
+				var m=(data.charCodeAt(a)>>2)&3;
+				var n=(data.charCodeAt(a)>>4)&3;
+				var o=(data.charCodeAt(a)>>6)&3;
+				
+				bytes.writeValue(bytes,code[o],codebits[o]);
+				bytes.writeValue(bytes,code[n],codebits[n]);
+				bytes.writeValue(bytes,code[m],codebits[m]);
+				bytes.writeValue(bytes,code[l],codebits[l]);
+				
+				}catch(ex){ex.toString();}
+     }
+     a=bytes.power;
+     for(i=8;i>a;i--)
+       bytes.writeBit(bytes,1);
      
      return bytes.data;
    }, 
    decode: function(data){
      var bytes=new reader();
      bytes.data=data;
-     var result=[];
-     
-     
-     return result;
+     var ints=[];
+     var i, q, decoded;
+    while(bytes.bits<data.length)
+		{
+			decoded=0;
+			var zero=bytes.readBit(bytes);
+			if(zero==0){
+				q = bytes.readBit(bytes);
+				if (q==0){
+					i=bytes.readBit(bytes);
+					if(i==0){
+						decoded+=3;
+					}else{
+						decoded+=2;
+					}
+				}else{
+					decoded+=1;
+				}
+			}
+			
+			decoded=decoded<<2;
+			
+			zero=bytes.readBit(bytes);
+			if(zero==0){
+				q = bytes.readBit(bytes);
+				if (q==0){
+					i=bytes.readBit(bytes);
+					if(i==0){
+						decoded+=3;
+					}else{
+						decoded+=2;
+					}
+				}else{
+					decoded+=1;
+				}
+			}
+			
+			decoded=decoded<<2;
+			
+			zero=bytes.readBit(bytes);
+			if(zero==0){
+				q = bytes.readBit(bytes);
+				if (q==0){
+					i=bytes.readBit(bytes);
+					if(i==0){
+						decoded+=3;
+					}else{
+						decoded+=2;
+					}
+				}else{
+					decoded+=1;
+				}
+			}
+			
+			decoded=decoded<<2;
+			
+			zero=bytes.readBit(bytes);
+			if(zero==0){
+				q = bytes.readBit(bytes);
+				if (q==0){
+					i=bytes.readBit(bytes);
+					if(i==0){
+						decoded+=3;
+					}else{
+						decoded+=2;
+					}
+				}else{
+					decoded+=1;
+				}
+			}
+		
+			ints.push(decoded);
+			
+			
+		}
+		 ints.pop();
+     return ints;
    }
 };
 
@@ -168,12 +259,14 @@ var LZW = {
 }, 
     comp = LZW.compress("Qsx for javascript"),
     decomp = LZW.decompress(comp);
-    var data=QSX.encode("Hello--");
+    var data=QSX.encode("Hello -- ");
     var usx=QSX.decode(data);
-    document.write(usx);
+    
+    var text="" ;
+    for (var y in usx)text+=String.fromCharCode(usx[y]);
+    document.write(text);
     document.write(decomp);
    </script>
    
 </won>
  </body>
-   
